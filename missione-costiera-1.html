@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Missione Costiera · Il Gioco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --maiolica:#1c4e89;
+  --maiolica-deep:#123458;
+  --mare:#3aa6b9;
+  --limone:#f2c531;
+  --limone-deep:#d9a404;
+  --carta:#fdfaf2;
+  --inchiostro:#1c2733;
+  --griglia:#e6ddc8;
+  --corallo:#c2452d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'Instrument Sans',system-ui,sans-serif;
+  background:var(--carta);color:var(--inchiostro);min-height:100vh;
+  background-image:radial-gradient(circle at 1px 1px, rgba(28,78,137,.07) 1px, transparent 0);
+  background-size:22px 22px;
+}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 90px}
+
+/* ---------- header ---------- */
+header{
+  background:var(--maiolica);color:var(--carta);
+  margin:0 -16px;padding:26px 20px 24px;position:relative;overflow:hidden;
+}
+header::after{
+  content:"";position:absolute;left:0;right:0;bottom:-2px;height:14px;
+  background:radial-gradient(circle at 10px -4px, transparent 11px, var(--carta) 12px);
+  background-size:22px 16px;
+}
+.eyebrow{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--limone);margin-bottom:6px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(28px,8vw,40px);line-height:1.02;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--limone)}
+#segreto{cursor:pointer;display:inline-block;transition:transform .15s}
+#segreto:active{transform:scale(1.3) rotate(-15deg)}
+.sub{margin-top:8px;font-size:13.5px;opacity:.85}
+
+/* ---------- scoreboard ---------- */
+.plancia{
+  margin:18px -4px 0;display:flex;gap:10px;
+}
+.pannello{
+  flex:1;background:#fff;border:2px solid var(--maiolica);border-radius:14px;
+  padding:12px 10px;text-align:center;
+}
+.pannello .val{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:24px;color:var(--maiolica-deep);line-height:1}
+.pannello .lbl{font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#7a8592;margin-top:4px}
+.grado-badge{font-size:22px;display:block;margin-bottom:2px}
+.grado-nome{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;color:var(--maiolica-deep)}
+.grado-next{font-size:10.5px;color:#7a8592;margin-top:3px}
+
+/* ---------- rotta ---------- */
+.rotta{margin:16px -4px 4px;position:relative;height:56px}
+.rotta svg{width:100%;height:100%;display:block}
+.ferry{position:absolute;top:0;left:3%;font-size:26px;transform:translateX(-50%);transition:left .6s cubic-bezier(.34,1.4,.5,1);filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.porti{display:flex;justify-content:space-between;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;margin-top:-6px}
+
+/* ---------- giorni ---------- */
+.giorno{margin-top:32px}
+.giorno-testa{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:3px solid var(--maiolica);padding-bottom:8px;margin-bottom:4px}
+.giorno-testa h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;color:var(--maiolica-deep);display:flex;align-items:center;gap:8px}
+.giorno-testa .data{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--maiolica);letter-spacing:.1em;text-transform:uppercase}
+.giorno-sub{font-size:13px;color:#5a6673;margin:6px 0 14px}
+
+/* ingranaggio */
+.gear{display:inline-block;animation:gira 4s linear infinite;font-size:22px}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+/* ---------- tappe ---------- */
+.tappa{
+  display:flex;gap:12px;align-items:flex-start;background:#fff;
+  border:1.5px solid var(--griglia);border-radius:14px;padding:13px 14px;margin-bottom:10px;
+  cursor:pointer;transition:transform .12s,border-color .2s,background .3s;
+  -webkit-tap-highlight-color:transparent;user-select:none;position:relative;
+}
+.tappa:active{transform:scale(.985)}
+.tappa.fatta{background:#fbf5df;border-color:var(--limone-deep)}
+.tappa.fatta .nome .txt{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--limone-deep);color:#8a7a3a}
+.spunta{flex:0 0 30px;height:30px;margin-top:2px;border:2.5px solid var(--maiolica);border-radius:9px;display:grid;place-items:center;font-size:17px;background:var(--carta);transition:transform .25s cubic-bezier(.34,1.8,.5,1),background .2s,border-color .2s}
+.tappa.fatta .spunta{background:var(--limone);border-color:var(--limone-deep);transform:rotate(-8deg) scale(1.08)}
+.spunta .lemon{opacity:0;transform:scale(.3);transition:all .25s}
+.tappa.fatta .spunta .lemon{opacity:1;transform:scale(1)}
+.corpo{flex:1;min-width:0}
+.ora{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--mare);letter-spacing:.06em}
+.nome{font-weight:600;font-size:15.5px;line-height:1.25;margin:1px 0 3px}
+.nota{font-size:13px;line-height:1.45;color:#5a6673}
+.nota b{color:var(--maiolica);font-weight:600}
+.pt{
+  position:absolute;top:10px;right:12px;
+  font-family:'Spline Sans Mono',monospace;font-size:10.5px;
+  background:var(--maiolica);color:#fff;border-radius:20px;padding:2px 8px;
+}
+.tappa.boss .pt{background:var(--corallo)}
+.tappa.boss{border:2px solid var(--corallo)}
+.tag{display:inline-block;font-family:'Spline Sans Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;background:var(--maiolica);color:#fff;border-radius:5px;padding:2px 7px;margin-bottom:4px}
+.tag.boss{background:var(--corallo)}
+.tag.mare{background:var(--mare)}
+
+/* ---------- carte sfida ---------- */
+.mazzo{
+  background:var(--maiolica-deep);color:var(--carta);border-radius:18px;
+  padding:20px 18px;margin-top:14px;text-align:center;position:relative;overflow:hidden;
+}
+.mazzo::before{content:"🃏";position:absolute;font-size:90px;opacity:.08;right:-10px;top:-14px;transform:rotate(15deg)}
+.mazzo h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;color:var(--limone)}
+.mazzo p{font-size:13px;opacity:.85;margin-top:5px}
+.pesca{
+  margin-top:14px;background:var(--limone);color:var(--maiolica-deep);border:none;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;
+  padding:12px 26px;border-radius:30px;cursor:pointer;
+  box-shadow:0 4px 0 var(--limone-deep);transition:transform .1s,box-shadow .1s;
+}
+.pesca:active{transform:translateY(3px);box-shadow:0 1px 0 var(--limone-deep)}
+.carta-attiva{
+  margin-top:14px;background:#fff;color:var(--inchiostro);border-radius:14px;
+  padding:14px;display:none;text-align:left;
+  animation:flip .4s cubic-bezier(.34,1.4,.5,1);
+}
+@keyframes flip{from{transform:rotateY(80deg) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.carta-attiva.show{display:block}
+.carta-attiva .c-titolo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;color:var(--corallo)}
+.carta-attiva .c-testo{font-size:13.5px;margin-top:4px;line-height:1.45}
+.c-azioni{display:flex;gap:8px;margin-top:12px}
+.c-btn{flex:1;border:none;border-radius:10px;padding:10px;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer}
+.c-ok{background:var(--limone);color:var(--maiolica-deep)}
+.c-no{background:#eef0f2;color:#5a6673}
+.sfide-fatte{margin-top:12px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--limone)}
+
+/* ---------- ruota del destino ---------- */
+.ruota-box{
+  background:#fff;border:2px dashed var(--mare);border-radius:18px;
+  padding:20px 18px;margin-top:14px;text-align:center;
+}
+.ruota-box h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;color:var(--maiolica-deep)}
+.ruota-box p{font-size:13px;color:#5a6673;margin-top:5px}
+.gira-btn{
+  margin-top:14px;background:var(--mare);color:#fff;border:none;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;
+  padding:12px 26px;border-radius:30px;cursor:pointer;
+  box-shadow:0 4px 0 #26869a;transition:transform .1s,box-shadow .1s;
+}
+.gira-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #26869a}
+.destino{
+  margin-top:14px;min-height:52px;display:flex;align-items:center;justify-content:center;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;
+  color:var(--maiolica-deep);padding:10px;background:var(--carta);border-radius:12px;
+}
+.destino.spin{animation:shake .12s linear infinite}
+@keyframes shake{25%{transform:translateX(-2px) rotate(-.5deg)}75%{transform:translateX(2px) rotate(.5deg)}}
+
+/* ---------- finale ---------- */
+.finale{display:none;margin-top:36px;text-align:center;background:var(--maiolica);color:var(--carta);border-radius:18px;padding:30px 22px}
+.finale.show{display:block;animation:pop .5s cubic-bezier(.34,1.5,.5,1)}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.finale h3{font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;color:var(--limone)}
+.finale p{margin-top:8px;font-size:14px;opacity:.9}
+
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);
+  background:var(--maiolica-deep);color:var(--limone);border-radius:30px;
+  padding:10px 20px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+  font-size:15px;z-index:60;transition:transform .35s cubic-bezier(.34,1.5,.5,1);
+  box-shadow:0 6px 18px rgba(0,0,0,.25);white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+.reset{display:block;margin:28px auto 0;background:none;border:none;font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#9aa4ae;cursor:pointer;text-decoration:underline}
+footer{margin-top:28px;text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#9aa4ae;letter-spacing:.08em}
+.limone-cade{position:fixed;top:-40px;font-size:26px;z-index:50;pointer-events:none;animation:cade linear forwards}
+@keyframes cade{to{transform:translateY(110vh) rotate(340deg)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Grottammare → Sorrento → Agerola → alto mare</div>
+  <h1>Missione <em>Costiera</em> <span id="segreto">🍋</span></h1>
+  <div class="sub">8 membri d'equipaggio · 17–19 luglio 2026<br>Ogni tappa vale punti. Ogni sfida vale gloria. ⚓</div>
+</header>
+
+<div class="plancia">
+  <div class="pannello">
+    <div class="val" id="punti">0</div>
+    <div class="lbl">Punti equipaggio</div>
+  </div>
+  <div class="pannello">
+    <span class="grado-badge" id="gradoIcona">🧹</span>
+    <div class="grado-nome" id="gradoNome">Mozzo</div>
+    <div class="grado-next" id="gradoNext"></div>
+  </div>
+</div>
+
+<div class="rotta">
+  <svg viewBox="0 0 600 34" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0,22 Q15,12 30,22 T60,22 T90,22 T120,22 T150,22 T180,22 T210,22 T240,22 T270,22 T300,22 T330,22 T360,22 T390,22 T420,22 T450,22 T480,22 T510,22 T540,22 T570,22 T600,22"
+          fill="none" stroke="#3aa6b9" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="1 7"/>
+  </svg>
+  <div class="ferry" id="ferry">⛵</div>
+</div>
+<div class="porti"><span>Partenza</span><span>Alto mare</span><span>Ritorno</span></div>
+
+<!-- ============ VENERDÌ ============ -->
+<section class="giorno">
+  <div class="giorno-testa"><h2>Venerdì</h2><span class="data">17 lug · Viaggio → Sorrento → Agerola</span></div>
+  <p class="giorno-sub">Livello 1: la traversata terrestre. Obiettivo: arrivare a cena da veri capitani.</p>
+
+  <div class="tappa" data-id="v1" data-pt="10">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Mattina · si parte!</div>
+      <div class="nome"><span class="txt">Partenza da Grottammare al completo</span></div>
+      <div class="nota">Appello fatto: <b>8 su 8 a bordo</b>. Chi ha dimenticato il costume lo confessa ora, non a Sorrento.</div>
+    </div>
+    <span class="pt">+10</span>
+  </div>
+
+  <div class="tappa" data-id="v2" data-pt="10">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Sosta autogrill</div>
+      <div class="nome"><span class="txt">Caffè di squadra n°1</span></div>
+      <div class="nota">Rituale obbligatorio. Bonus onore a chi resiste e <b>non</b> compra il Camogli.</div>
+    </div>
+    <span class="pt">+10</span>
+  </div>
+
+  <div class="tappa" data-id="v3" data-pt="20">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Pomeriggio · Sorrento</div>
+      <div class="nome"><span class="txt">Piazza Tasso e centro storico conquistati</span></div>
+      <div class="nota">Passeggiata tra i vicoli, Villa Comunale con vista sul golfo, e il profumo di limoni ovunque. <b>Prima missione fotografica:</b> il panorama su Napoli e il Vesuvio.</div>
+    </div>
+    <span class="pt">+20</span>
+  </div>
+
+  <div class="tappa" data-id="v4" data-pt="15">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Sorrento · merenda strategica</div>
+      <div class="nome"><span class="txt">Primo assaggio al limone del weekend</span></div>
+      <div class="nota">Granita, delizia o gelato allo sfusato: si apre ufficialmente il <b>campionato del limone</b>. Segnatevi il voto: a fine weekend si elegge il migliore.</div>
+    </div>
+    <span class="pt">+15</span>
+  </div>
+
+  <div class="tappa" data-id="v5" data-pt="10">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Tardo pomeriggio</div>
+      <div class="nome"><span class="txt">Check-in hotel ad Agerola</span></div>
+      <div class="nota">600 metri sul mare: aria fresca gratis mentre giù in costa si sciolgono. Camere assegnate <b>senza litigare</b> = punti pieni.</div>
+    </div>
+    <span class="pt">+10</span>
+  </div>
+
+  <div class="tappa" data-id="v6" data-pt="20">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <span class="tag">Prenotato ✓</span>
+      <div class="ora">20:30–21:00 · parcheggio già prenotato</div>
+      <div class="nome"><span class="txt">Cena a "Le Bontà del Capitano"</span></div>
+      <div class="nota">Il nome è un presagio: si cena dal Capitano prima di salpare col capitano. Regola della casa: <b>il menù lo si scopre, non lo si googla</b>. Fidatevi della cucina.</div>
+    </div>
+    <span class="pt">+20</span>
+  </div>
+</section>
+
+<!-- ============ SABATO ============ -->
+<section class="giorno">
+  <div class="giorno-testa"><h2>Sabato</h2><span class="data">18 lug · Giro della Costiera in barca 🛥️</span></div>
+  <p class="giorno-sub">Livello 2: alto mare. La Costiera come va vista — dal lato giusto. Missioni marinare attive.</p>
+
+  <div class="tappa" data-id="s1" data-pt="10">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Mattina · imbarco</div>
+      <div class="nome"><span class="txt">Tutti a bordo puntuali</span></div>
+      <div class="nota">La barca non aspetta e il capitano giudica. Crema solare <b>prima</b> di salire: il riflesso del mare non perdona.</div>
+    </div>
+    <span class="pt">+10</span>
+  </div>
+
+  <div class="tappa" data-id="s2" data-pt="15">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <span class="tag mare">Missione marinara</span>
+      <div class="nome"><span class="txt">Positano avvistata dal mare</span></div>
+      <div class="nota">La cartolina delle cartoline, senza cercare parcheggio. Chi la avvista per primo grida <b>"terra!"</b> — obbligatorio, è nel regolamento.</div>
+    </div>
+    <span class="pt">+15</span>
+  </div>
+
+  <div class="tappa" data-id="s3" data-pt="15">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <span class="tag mare">Missione marinara</span>
+      <div class="nome"><span class="txt">Grotte e fiordo esplorati</span></div>
+      <div class="nota">Grotta dello Smeraldo, Fiordo di Furore, archi di roccia: dove il capitano rallenta, lì c'è la foto. <b>Occhi aperti, telefoni carichi.</b></div>
+    </div>
+    <span class="pt">+15</span>
+  </div>
+
+  <div class="tappa" data-id="s4" data-pt="20">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <span class="tag mare">Missione marinara</span>
+      <div class="nome"><span class="txt">Tuffo certificato in acqua blu</span></div>
+      <div class="nota">Almeno <b>6 su 8</b> in acqua per convalidare la tappa. Gli altri due filmano: qualcuno deve pur documentare la storia.</div>
+    </div>
+    <span class="pt">+20</span>
+  </div>
+
+  <div class="tappa" data-id="s5" data-pt="15">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">In rada</div>
+      <div class="nome"><span class="txt">Pranzo/brindisi con vista impossibile</span></div>
+      <div class="nota">Brindisi ufficiale della missione. Il primo che dice <b>"eh ma qui la vita è un'altra cosa"</b> paga il secondo giro a terra.</div>
+    </div>
+    <span class="pt">+15</span>
+  </div>
+
+  <div class="tappa" data-id="s6" data-pt="15">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <span class="tag mare">Missione marinara</span>
+      <div class="nome"><span class="txt">Foto di gruppo col capitano</span></div>
+      <div class="nota">Trofeo del giorno. Bonus leggenda se il capitano <b>sorride davvero</b> e non per cortesia.</div>
+    </div>
+    <span class="pt">+15</span>
+  </div>
+
+  <div class="tappa" data-id="s7" data-pt="10">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Sera · Agerola</div>
+      <div class="nome"><span class="txt">Rientro alla base e cena da lupi di mare</span></div>
+      <div class="nota">Sale sulla pelle, appetito da naufraghi, racconti già ingigantiti del 30%. <b>Così si chiude una giornata perfetta.</b></div>
+    </div>
+    <span class="pt">+10</span>
+  </div>
+</section>
+
+<!-- ============ DOMENICA ============ -->
+<section class="giorno">
+  <div class="giorno-testa"><h2>Domenica <span class="gear">⚙️</span></h2><span class="data">19 lug · Piano in elaborazione…</span></div>
+  <p class="giorno-sub">Livello 3: il giorno mistero. Il programma è in officina — nel frattempo, la Ruota del Destino accetta scommesse.</p>
+
+  <div class="ruota-box">
+    <h3>🎡 Ruota del Destino</h3>
+    <p>Non sapete che fare domenica? Girate la ruota a cena e lasciate decidere al fato (o usatela come sondaggio: tre giri, si vota il migliore).</p>
+    <button class="gira-btn" id="gira">GIRA LA RUOTA</button>
+    <div class="destino" id="destino">Il destino attende…</div>
+  </div>
+
+  <div class="tappa" data-id="d1" data-pt="10" style="margin-top:14px">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Mattina</div>
+      <div class="nome"><span class="txt">Check-out senza oggetti dimenticati</span></div>
+      <div class="nota">Caricabatterie, costumi stesi, occhiali da sole: <b>ispezione incrociata</b> delle camere. Ogni oggetto dimenticato = disonore eterno.</div>
+    </div>
+    <span class="pt">+10</span>
+  </div>
+
+  <div class="tappa" data-id="d2" data-pt="15">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <div class="ora">Da definire ⚙️</div>
+      <div class="nome"><span class="txt">Missione misteriosa completata</span></div>
+      <div class="nota">Qualunque cosa deciderà la ruota (o il gruppo): flaggatela qui. <b>Il mistero vale comunque punti.</b></div>
+    </div>
+    <span class="pt">+15</span>
+  </div>
+
+  <div class="tappa boss" data-id="d3" data-pt="30">
+    <div class="spunta"><span class="lemon">🍋</span></div>
+    <div class="corpo">
+      <span class="tag boss">Boss finale</span>
+      <div class="ora">Entro le 19:00</div>
+      <div class="nome"><span class="txt">Grottammare: rientro in orario</span></div>
+      <div class="nota">Il KPI supremo del weekend: 4h30-5h di viaggio + domenica di luglio sull'A14. <b>Partenza dalla Campania entro le 13:30</b> o il boss vince lui.</div>
+    </div>
+    <span class="pt">+30</span>
+  </div>
+</section>
+
+<!-- ============ CARTE SFIDA ============ -->
+<section class="giorno">
+  <div class="giorno-testa"><h2>Carte Sfida</h2><span class="data">bonus · pesca quando vuoi</span></div>
+  <div class="mazzo">
+    <h3>🃏 Il Mazzo del Capitano</h3>
+    <p>12 sfide segrete. Pescane una quando il gruppo ha bisogno di pepe. Completata = <b>+15 punti</b>. Rifiutata = la vergogna.</p>
+    <button class="pesca" id="pesca">PESCA UNA CARTA</button>
+    <div class="carta-attiva" id="cartaAttiva">
+      <div class="c-titolo" id="cTitolo"></div>
+      <div class="c-testo" id="cTesto"></div>
+      <div class="c-azioni">
+        <button class="c-btn c-ok" id="cOk">Fatta! +15</button>
+        <button class="c-btn c-no" id="cNo">Rimescola</button>
+      </div>
+    </div>
+    <div class="sfide-fatte" id="sfideFatte"></div>
+  </div>
+</section>
+
+<div class="finale" id="finale">
+  <h3>🏆 Leggende della Costiera!</h3>
+  <p>Tutte le tappe conquistate. Il mare vi ricorderà, i limoni vi rimpiangeranno.<br>Equipaggio congedato con onore.</p>
+</div>
+
+<button class="reset" id="reset">Azzera partita</button>
+<footer>Missione Costiera · Il Gioco · rev. Luigi · buon vento ⚓</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const KEY='missione-costiera-game-2026';
+  const tappe=[...document.querySelectorAll('.tappa')];
+  const ferry=document.getElementById('ferry');
+  const puntiEl=document.getElementById('punti');
+  const finale=document.getElementById('finale');
+  const toast=document.getElementById('toast');
+  const gradoIcona=document.getElementById('gradoIcona');
+  const gradoNome=document.getElementById('gradoNome');
+  const gradoNext=document.getElementById('gradoNext');
+  let state={checked:[],sfide:0,segreto:false};
+  let toastTimer=null;
+
+  /* Storage a cascata: window.storage (app Claude) → localStorage (browser) → solo memoria */
+  const store={
+    async get(){
+      if(typeof window.storage!=='undefined'){
+        try{const r=await window.storage.get(KEY);if(r&&r.value)return r.value;}catch(e){}
+      }
+      try{return localStorage.getItem(KEY);}catch(e){}
+      return null;
+    },
+    async set(v){
+      if(typeof window.storage!=='undefined'){
+        try{await window.storage.set(KEY,v);return;}catch(e){}
+      }
+      try{localStorage.setItem(KEY,v);}catch(e){}
+    }
+  };
+
+  const GRADI=[
+    {min:0,  icona:'🧹',nome:'Mozzo'},
+    {min:50, icona:'⚓',nome:'Marinaio'},
+    {min:110,icona:'🪢',nome:'Nostromo'},
+    {min:180,icona:'🧭',nome:'Comandante'},
+    {min:250,icona:'👑',nome:'Leggenda della Costiera'}
+  ];
+
+  const SFIDE=[
+    {t:'Il Poliglotta',x:'Ordina qualcosa provando a usare almeno tre parole in napoletano. "Jamme", "guagliò" e "che bell\u2019" contano.'},
+    {t:'Il Fotografo Ufficiale',x:'Fai una foto di gruppo chiedendo a uno sconosciuto di scattarla. Punti doppi se poi vi applaude.'},
+    {t:'Caccia al Limone Gigante',x:'Trova e fotografa un limone più grande di una testa umana. In Costiera esistono, giuro.'},
+    {t:'Il Critico Gastronomico',x:'Al prossimo pasto, descrivi un piatto come farebbe MasterChef. Minimo 20 secondi, faccia serissima.'},
+    {t:'La Serenata',x:'Almeno un membro dell\u2019equipaggio canta un ritornello di una canzone napoletana. In barca vale triplo.'},
+    {t:'Lo Storico del Gruppo',x:'Racconta agli altri un fatto vero sulla Costiera che nessuno sapeva. Wikipedia consentita, 2 minuti di tempo.'},
+    {t:'Il Contrattatore',x:'In un negozio di souvenir, ottieni uno sconto qualsiasi. Anche simbolico. Anche solo un sorriso in omaggio.'},
+    {t:'Ritratto del Capitano',x:'Scopri il nome del capitano della barca e almeno una storia della sua vita in mare.'},
+    {t:'Il Sommelier di Limoncello',x:'Assaggia un limoncello e valutalo ad alta voce con nota di testa, cuore e fondo. Massima serietà.'},
+    {t:'La Cartolina Vivente',x:'Ricrea in gruppo la posa di una cartolina o di un quadro. Il passante che ride = missione riuscita.'},
+    {t:'Silenzio Radio',x:'15 minuti senza telefoni per tutto il gruppo, solo panorama e chiacchiere. I più difficili 15 minuti del weekend.'},
+    {t:'L\u2019Ambasciatore',x:'Fai amicizia con un altro gruppo di turisti e fatti consigliare un posto. Se il consiglio è buono, punti doppi.'}
+  ];
+
+  function mostraToast(msg){
+    toast.textContent=msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>toast.classList.remove('show'),2200);
+  }
+
+  async function load(){
+    try{
+      const v=await store.get();
+      if(v){const s=JSON.parse(v);state={...state,...s};}
+    }catch(e){/* prima partita */}
+    render(false);
+  }
+  async function save(){
+    try{await store.set(JSON.stringify(state));}
+    catch(e){console.error('salvataggio non riuscito',e);}
+  }
+
+  function calcolaPunti(){
+    let p=0;
+    tappe.forEach(t=>{if(state.checked.includes(t.dataset.id))p+=parseInt(t.dataset.pt||10);});
+    p+=state.sfide*15;
+    if(state.segreto)p+=25;
+    return p;
+  }
+
+  function render(celebrate){
+    tappe.forEach(t=>t.classList.toggle('fatta',state.checked.includes(t.dataset.id)));
+    const p=calcolaPunti();
+    puntiEl.textContent=p;
+    // grado
+    let g=GRADI[0],next=null;
+    for(const gr of GRADI){if(p>=gr.min)g=gr;else{next=gr;break;}}
+    gradoIcona.textContent=g.icona;
+    gradoNome.textContent=g.nome;
+    gradoNext.textContent=next?('prossimo grado a '+next.min+' pt'):'grado massimo!';
+    // barca
+    const pct=tappe.length?state.checked.length/tappe.length:0;
+    ferry.style.left=(3+pct*94)+'%';
+    // sfide contatore
+    document.getElementById('sfideFatte').textContent=
+      state.sfide>0?('Sfide completate: '+state.sfide+' / '+SFIDE.length+' (+'+state.sfide*15+' pt)'):'';
+    // finale
+    if(state.checked.length===tappe.length&&tappe.length>0){
+      finale.classList.add('show');
+      if(celebrate)pioggia();
+    }else finale.classList.remove('show');
+  }
+
+  function pioggia(){
+    for(let i=0;i<20;i++){
+      const l=document.createElement('div');
+      l.className='limone-cade';
+      l.textContent=['🍋','⛵','🌊','🏆'][Math.floor(Math.random()*4)];
+      l.style.left=Math.random()*100+'vw';
+      l.style.animationDuration=(2.2+Math.random()*2.5)+'s';
+      l.style.animationDelay=(Math.random()*.9)+'s';
+      document.body.appendChild(l);
+      setTimeout(()=>l.remove(),6500);
+    }
+  }
+
+  tappe.forEach(t=>{
+    t.addEventListener('click',()=>{
+      const id=t.dataset.id;
+      const idx=state.checked.indexOf(id);
+      const completing=idx===-1;
+      if(completing){state.checked.push(id);mostraToast('+'+(t.dataset.pt||10)+' punti! ⚓');}
+      else state.checked.splice(idx,1);
+      render(completing&&state.checked.length===tappe.length);
+      save();
+    });
+  });
+
+  /* ---- carte sfida ---- */
+  const cartaAttiva=document.getElementById('cartaAttiva');
+  let cartaCorrente=null;
+  document.getElementById('pesca').addEventListener('click',()=>{
+    cartaCorrente=SFIDE[Math.floor(Math.random()*SFIDE.length)];
+    document.getElementById('cTitolo').textContent='🃏 '+cartaCorrente.t;
+    document.getElementById('cTesto').textContent=cartaCorrente.x;
+    cartaAttiva.classList.remove('show');
+    void cartaAttiva.offsetWidth; /* restart animation */
+    cartaAttiva.classList.add('show');
+  });
+  document.getElementById('cOk').addEventListener('click',()=>{
+    if(!cartaCorrente)return;
+    state.sfide=Math.min(state.sfide+1,SFIDE.length);
+    cartaAttiva.classList.remove('show');
+    cartaCorrente=null;
+    mostraToast('Sfida completata! +15 🏅');
+    render(false);save();
+  });
+  document.getElementById('cNo').addEventListener('click',()=>{
+    cartaAttiva.classList.remove('show');cartaCorrente=null;
+  });
+
+  /* ---- ruota del destino ---- */
+  const DESTINI=[
+    '🏛️ Salerno: Duomo e Lungomare Trieste',
+    '🏺 Cava de\u2019 Tirreni: corso porticato e caffè',
+    '🌋 Pompei express: 2 ore tra gli scavi',
+    '🏖️ Mattinata di spiaggia e basta, senza sensi di colpa',
+    '🍕 Missione pizza: l\u2019ultima margherita campana',
+    '⛰️ Belvedere di Agerola e partenza con calma',
+    '🛍️ Caccia al souvenir perfetto (colatura e limoncello)',
+    '🎲 Decide il più giovane del gruppo, senza appello'
+  ];
+  const destinoEl=document.getElementById('destino');
+  let spinning=false;
+  document.getElementById('gira').addEventListener('click',()=>{
+    if(spinning)return;
+    spinning=true;
+    destinoEl.classList.add('spin');
+    let n=0;
+    const int=setInterval(()=>{
+      destinoEl.textContent=DESTINI[Math.floor(Math.random()*DESTINI.length)];
+      n++;
+      if(n>14){
+        clearInterval(int);
+        destinoEl.classList.remove('spin');
+        spinning=false;
+        mostraToast('Il destino ha parlato! 🎡');
+      }
+    },90);
+  });
+
+  /* ---- easter egg: 5 tap sul limone del titolo ---- */
+  let tapCount=0,tapTimer=null;
+  document.getElementById('segreto').addEventListener('click',()=>{
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer=setTimeout(()=>tapCount=0,1500);
+    if(tapCount>=5&&!state.segreto){
+      state.segreto=true;tapCount=0;
+      pioggia();
+      mostraToast('🥚 Segreto trovato! +25 punti');
+      render(false);save();
+    }else if(tapCount>=5){
+      mostraToast('Già trovato, furbetti 😏');
+      tapCount=0;
+    }
+  });
+
+  document.getElementById('reset').addEventListener('click',()=>{
+    if(confirm('Azzerare la partita? Punti, gradi e sfide torneranno a zero.')){
+      state={checked:[],sfide:0,segreto:false};
+      render(false);save();
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
